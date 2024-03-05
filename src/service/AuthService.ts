@@ -11,6 +11,9 @@ import { ServiceError } from "../error/ServiceError";
 export class AuthService {
 
     async login(username: string, password: string) {
+        if (username == null || username == undefined || username == "") throw new ServiceError("Username inválido.")
+        if (password == null || password == undefined || password == "") throw new ServiceError("Senha inválida.")
+
         const user = await this.repository.findByUsername(username)
         if (user == null) {
             throw new ResourceNotFoundError("Usuario não encontrado.")

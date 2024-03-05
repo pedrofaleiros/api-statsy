@@ -7,6 +7,7 @@ export class QuestionRepository {
             data: {
                 content: data.content,
                 lessonId: data.lessonId,
+                imageUrl: data.imageUrl,
             }
         })
     }
@@ -23,4 +24,5 @@ export class QuestionRepository {
 export interface QuestionParams {
     content: string
     lessonId: string
+    imageUrl: string | null
 }

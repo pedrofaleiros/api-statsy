@@ -32,6 +32,12 @@ export function errorHandler() {
       })
     }
 
+    if (err instanceof SyntaxError) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Verifique os dados enviados."
+      })
+    }
+
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: "Internal Server error",
       error: `${err.name}: ${err.message}`

@@ -81,6 +81,7 @@ model Question {
 
   content  String
   lessonId String
+  imageUrl String?
 
   alternatives Alternative[]
   answers      UserAnswer[]

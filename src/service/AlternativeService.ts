@@ -17,7 +17,16 @@ export class AlternativeService {
         if (await this.questionRepository.findById(questionId) == null) {
             throw new QuestionNotFoundError(questionId)
         }
-        return await this.repository.list(questionId)
+        const alts = await this.repository.list(questionId)
+        const data = new Array()
+        alts.forEach((alt) => {
+            data.push({
+                "id": alt.id,
+                "text": alt.text,
+                "questionId": alt.questionId,
+            })
+        })
+        return data
     }
 
     private validateAlternatives(alts: Alternative[], data: AlternativeParams) {
