@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    restart: always
+    hostname: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: questions
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - questions:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '0.5GB'
+
+  # app1: &app1
+  #   hostname: app1
+  #   stdin_open: true
+  #   build:
+  #     context: .
+  #   restart: always
+  #   depends_on:
+  #     - postgres
+  #   ports:
+  #     - 3000:3000
+  #   environment:
+  #     DATABASE_URL: ${DATABASE_URL}
+  #     JWT_SECRET: ${JWT_SECRET}
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.5'
+  #         memory: '0.5GB'
+volumes:
+  questions:

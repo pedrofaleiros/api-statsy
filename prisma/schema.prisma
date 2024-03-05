@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id String @id @default(uuid())
+
+  name     String
+  username String @unique
+  email    String @unique
+  password String
+
+  role Role @default(USER)
+
+  answers            UserAnswer[]
+  userLessons        UserLesson[]
+  confirmationCodes  ConfirmationCode[]
+  passwordRecoveries PasswordRecovery[]
+
+  @@index([id, username, email])
+  @@map("users")
+}
+
+model UserAnswer {
+  id String @id @default(uuid())
+
+  userId        String
+  questionId    String
+  alternativeId String
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  alternative Alternative @relation(fields: [alternativeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId, questionId])
+  @@map("user_answers")
+}
+
+model UserLesson {
+  id String @id @default(uuid())
+
+  userId   String
+  lessonId String
+
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId, lessonId])
+  @@map("user_lessons")
+}
+
+model Lesson {
+  id String @id @default(uuid())
+
+  name        String
+  description String
+  level       Int
+  points      Int
+
+  questions   Question[]
+  userLessons UserLesson[]
+
+  @@index([id, level])
+  @@map("lessons")
+}
+
+model Question {
+  id String @id @default(uuid())
+
+  content  String
+  lessonId String
+
+  alternatives Alternative[]
+  answers      UserAnswer[]
+  Lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([id, lessonId])
+  @@map("questions")
+}
+
+model Alternative {
+  id String @id @default(uuid())
+
+  text       String
+  isCorrect  Boolean
+  questionId String
+
+  question Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  UserAnswer[]
+
+  @@index([id, questionId])
+  @@map("alternatives")
+}
+
+model PasswordRecovery {
+  id String @id @default(uuid())
+
+  code      String
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_recovery")
+}
+
+model ConfirmationCode {
+  id String @id @default(uuid())
+
+  code      String
+  userId    String
+  confirmed Boolean  @default(false)
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+  @@map("confirmation_codes")
+}
