@@ -19,7 +19,7 @@ export class LessonRepository {
     }
 
     async list() {
-        return await prismaClient.lesson.findMany()
+        return await prismaClient.lesson.findMany({ orderBy: { level: "asc" } })
     }
 
     async listByLevel(level: number) {

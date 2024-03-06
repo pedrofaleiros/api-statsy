@@ -21,6 +21,13 @@ export class QuestionRepository {
         return await prismaClient.question.findUnique({ where: { id: id } })
     }
 
+    async findByIdWithAlternatives(id: string) {
+        return await prismaClient.question.findUnique({
+            where: { id: id },
+            include: { alternatives: true }
+        })
+    }
+
     async deleteById(id: string) {
         return await prismaClient.question.delete({ where: { id: id } })
     }

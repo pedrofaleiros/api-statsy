@@ -5,6 +5,7 @@ import { AlternativeController } from "./controller/AlternativeController";
 import { AuthController } from "./controller/AuthController";
 import { isAuthenticated } from "./middlewares/isAuthenticated";
 import { isAdmin } from "./middlewares/isAdmin";
+import { AnswerController } from "./controller/AnswerController";
 
 const router = Router();
 
@@ -28,6 +29,10 @@ const alternative = new AlternativeController()
 router.post("/alternative", isAuthenticated, alternative.create)
 router.get('/alternative/question/:questionId', isAuthenticated, alternative.list)
 router.delete("/alternative/:id", isAuthenticated, alternative.delete)
+
+const answer = new AnswerController()
+router.post("/answer/question/:questionId/alternative/:alternativeId", isAuthenticated, answer.answer)
+router.get("/answer/question/:questionId", isAuthenticated, answer.detail)
 
 router.get("/", (_, res) => res.json({ status: "OK" }));
 
