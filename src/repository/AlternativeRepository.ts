@@ -1,8 +1,9 @@
+import { AlternativeModel } from "../model/AlternativeModel";
 import prismaClient from "../utils/prisma/prismaClient";
 
 export class AlternativeRepository {
 
-    async create(data: AlternativeParams) {
+    async create(data: AlternativeModel) {
         return await prismaClient.alternative.create({
             data: {
                 text: data.text,
@@ -19,10 +20,8 @@ export class AlternativeRepository {
     async findById(id: string) {
         return await prismaClient.alternative.findUnique({ where: { id: id } })
     }
-}
 
-export interface AlternativeParams {
-    text: string,
-    isCorrect: boolean,
-    questionId: string,
+    async deleteById(alternativeId: string) {
+        return await prismaClient.alternative.delete({ where: { id: alternativeId } })
+    }
 }

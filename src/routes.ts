@@ -17,14 +17,17 @@ router.post("/auth/confirm/send", auth.sendConfirmationCode)
 const lesson = new LessonController()
 router.post('/lesson', isAuthenticated, lesson.create)
 router.get('/lesson/all', isAuthenticated, lesson.list)
+router.delete('/lesson/:id', isAuthenticated, lesson.delete)
 
 const question = new QuestionController()
 router.post('/question', isAuthenticated, question.create)
 router.get('/question/lesson/:lessonId', isAuthenticated, question.list)
+router.delete('/question/:id', isAuthenticated, question.delete)
 
 const alternative = new AlternativeController()
 router.post("/alternative", isAuthenticated, alternative.create)
 router.get('/alternative/question/:questionId', isAuthenticated, alternative.list)
+router.delete("/alternative/:id", isAuthenticated, alternative.delete)
 
 router.get("/", (_, res) => res.json({ status: "OK" }));
 

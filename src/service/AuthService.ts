@@ -5,8 +5,8 @@ import { ConfirmationCodeRepository } from "../repository/ConfirmationCodeReposi
 import { verifyPassword } from "../utils/functions/verifyPassword";
 import { getJWT } from "../utils/functions/getJWT";
 import { ResourceNotFoundError } from "../error/ResourceNotFoundError";
-import { NotAuthError } from "../error/NotAuthError";
 import { ServiceError } from "../error/ServiceError";
+import { LoginError } from "../error/LoginError";
 
 export class AuthService {
 
@@ -14,10 +14,8 @@ export class AuthService {
         if (username == null || username == undefined || username == "") throw new ServiceError("Username inválido.")
         if (password == null || password == undefined || password == "") throw new ServiceError("Senha inválida.")
 
-        const user = await this.repository.findByUsername(username)
-        if (user == null) {
-            throw new ResourceNotFoundError("Usuario não encontrado.")
-        }
+        const user = await this.findUserByUsername(username)
+
         await this.verifyEmailIsConfirmed(user.id)
         await verifyPassword(password, user.password)
         const token = getJWT(user.id, user.username)
@@ -27,12 +25,6 @@ export class AuthService {
             username: user.username,
             email: user.email,
             token: token,
-        }
-    }
-
-    async verifyEmailIsConfirmed(userId: string) {
-        if (await this.confirmationCodeRepository.findValid(userId) == null) {
-            throw new NotAuthError("Confirme seu email.")
         }
     }
 
@@ -48,21 +40,46 @@ export class AuthService {
     }
 
     async sendConfirmationCode(email: string) {
-        const user = await this.repository.findByEmail(email)
-        if (user == null) {
-            throw new ResourceNotFoundError("Email não encontrado.")
-        }
+        const user = await this.findUserByEmail(email);
+
         const list = await this.confirmationCodeRepository.list(user.id)
         let notExpiredCount = 0
         const now = new Date()
         list.forEach((date) => { if (now < date.expiresAt) notExpiredCount++ })
-        if (notExpiredCount > 2) {
-            throw new ServiceError("Limite de solicitações excedido.")
+        if (notExpiredCount > 5) {
+            throw new ServiceError("Limite de solicitações excedido. Tente novamente mais tarde.")
         }
+
         await this.createConfirmationCode(user.id)
     }
 
-    async createConfirmationCode(userId: string) {
+    async confirmEmail(email: string, code: string) {
+        const user = await this.findUserByEmail(email)
+
+        const validCode = await this.confirmationCodeRepository.findValid(user.id)
+        if (validCode != null) throw new ServiceError("Email já foi confirmado.")
+
+        const confirmation = await this.confirmationCodeRepository.find(user.id, code)
+
+        if (confirmation == null) throw new ServiceError("Código de confirmação inválido.")
+        if (new Date() > confirmation.expiresAt) throw new ServiceError("Código de confirmação expirado.")
+
+        await this.confirmationCodeRepository.confirmEmail(confirmation.id)
+    }
+
+    constructor() {
+        this.repository = new UserRepository()
+        this.emailService = new EmailService()
+        this.confirmationCodeRepository = new ConfirmationCodeRepository()
+    }
+
+    private async verifyEmailIsConfirmed(userId: string) {
+        if (await this.confirmationCodeRepository.findValid(userId) == null) {
+            throw new LoginError("Confirme seu email.")
+        }
+    }
+
+    private async createConfirmationCode(userId: string) {
         const code = this.getRandomCode()
         const expiresAt = new Date(new Date().getTime() + 30 * 60000) // 30 minutos
         const confirmation = await this.confirmationCodeRepository.create(code, userId, expiresAt)
@@ -73,28 +90,16 @@ export class AuthService {
         )
     }
 
-    async confirmEmail(email: string, code: string) {
-        const user = await this.repository.findByEmail(email)
-        if (user == null) {
-            throw new ResourceNotFoundError("Email não encontrado")
-        }
-        if (await this.confirmationCodeRepository.findValid(user.id) != null) {
-            throw new ServiceError("Email já foi confirmado.")
-        }
-        const confirmation = await this.confirmationCodeRepository.find(user.id, code)
-        if (confirmation == null) {
-            throw new ServiceError("Código de confirmação inválido.")
-        }
-        if (new Date() > confirmation.expiresAt) {
-            throw new ServiceError("Código de confirmação expirado.")
-        }
-        await this.confirmationCodeRepository.confirmEmail(confirmation.id)
+    private async findUserByEmail(email: string) {
+        const user = await this.repository.findByEmail(email);
+        if (user == null) throw new ResourceNotFoundError("Email não encontrado.");
+        return user;
     }
 
-    constructor() {
-        this.repository = new UserRepository()
-        this.emailService = new EmailService()
-        this.confirmationCodeRepository = new ConfirmationCodeRepository()
+    private async findUserByUsername(username: string) {
+        const user = await this.repository.findByUsername(username)
+        if (user == null) throw new ResourceNotFoundError("Usuario não encontrado.")
+        return user
     }
 
     private getRandomCode(): string {

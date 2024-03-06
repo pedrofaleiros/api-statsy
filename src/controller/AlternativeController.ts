@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { AlternativeService } from "../service/AlternativeService";
 import { StatusCodes } from "http-status-codes";
-import { validateAlternative } from "../validator/validateAlternative";
+import { AlternativeModel } from "../model/AlternativeModel";
 
 export class AlternativeController {
 
     async create(req: Request, res: Response) {
-        await this.service.create(validateAlternative(req.body))
+        const alt = AlternativeModel.fromRequest(req)
+        await this.service.create(alt)
         return res.sendStatus(StatusCodes.CREATED)
     }
 
@@ -15,10 +16,17 @@ export class AlternativeController {
         return res.json(await this.service.list(id))
     }
 
+    async delete(req: Request, res: Response) {
+        const id = req.params.id
+        await this.service.deleteById(id)
+        res.sendStatus(StatusCodes.NO_CONTENT)
+    }
+
     constructor() {
         this.service = new AlternativeService()
         this.create = this.create.bind(this)
         this.list = this.list.bind(this)
+        this.delete = this.delete.bind(this)
     }
 
     private service: AlternativeService

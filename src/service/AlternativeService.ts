@@ -1,12 +1,13 @@
 import { Alternative } from "@prisma/client";
-import { AlternativeParams, AlternativeRepository } from "../repository/AlternativeRepository";
+import { AlternativeRepository } from "../repository/AlternativeRepository";
 import { QuestionRepository } from "../repository/QuestionRepository";
 import { ServiceError } from "../error/ServiceError";
-import { QuestionNotFoundError } from "../error/impl/QuestionNotFoundError";
+import { ResourceNotFoundError } from "../error/ResourceNotFoundError";
+import { AlternativeModel } from "../model/AlternativeModel";
 
 export class AlternativeService {
 
-    async create(data: AlternativeParams) {
+    async create(data: AlternativeModel) {
         await this.findQuestion(data.questionId)
         const alts = await this.repository.list(data.questionId)
         this.validateAlternatives(alts, data);
@@ -15,7 +16,7 @@ export class AlternativeService {
 
     async list(questionId: string) {
         if (await this.questionRepository.findById(questionId) == null) {
-            throw new QuestionNotFoundError(questionId)
+            throw new ResourceNotFoundError("Questão não encontrada.")
         }
         const alts = await this.repository.list(questionId)
         const data = new Array()
@@ -29,7 +30,13 @@ export class AlternativeService {
         return data
     }
 
-    private validateAlternatives(alts: Alternative[], data: AlternativeParams) {
+    async deleteById(alternativeId: any) {
+        if (typeof alternativeId !== 'string') throw new ServiceError("'alternativeId' inválido.")
+        if (await this.repository.findById(alternativeId) == null) throw new ResourceNotFoundError("Alternativa não encontrada.")
+        await this.repository.deleteById(alternativeId)
+    }
+
+    private validateAlternatives(alts: Alternative[], data: AlternativeModel) {
         let count = 0;
         alts.forEach((alt) => { if (alt.isCorrect) count++; });
         if (alts.length >= 5) {
@@ -45,7 +52,7 @@ export class AlternativeService {
 
     private async findQuestion(questionId: string) {
         if (await this.questionRepository.findById(questionId) == null) {
-            throw new QuestionNotFoundError(questionId)
+            throw new ResourceNotFoundError("Questão não encontrada.")
         }
     }
 

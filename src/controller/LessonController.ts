@@ -1,17 +1,24 @@
 import { Request, Response } from "express";
 import { LessonService } from "../service/LessonService";
 import { StatusCodes } from "http-status-codes";
-import { validateLesson } from "../validator/validateLesson";
+import { LessonModel } from "../model/LessonModel";
 
 export class LessonController {
 
     async create(req: Request, res: Response) {
-        await this.service.create(validateLesson(req.body))
+        const lesson = LessonModel.fromRequest(req)
+        await this.service.create(lesson)
         res.sendStatus(StatusCodes.CREATED)
     }
 
-    async list(req: Request, res: Response) {
+    async list(_: Request, res: Response) {
         res.json(await this.service.list())
+    }
+
+    async delete(req: Request, res: Response) {
+        const id = req.params.id
+        await this.service.deleteById(id)
+        res.sendStatus(StatusCodes.NO_CONTENT)
     }
 
     private service: LessonService
@@ -20,6 +27,7 @@ export class LessonController {
         this.service = new LessonService()
         this.create = this.create.bind(this)
         this.list = this.list.bind(this)
+        this.delete = this.delete.bind(this)
     }
 
 }

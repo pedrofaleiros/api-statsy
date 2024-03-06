@@ -1,8 +1,9 @@
+import { QuestionModel } from "../model/QuestionModel"
 import prismaClient from "../utils/prisma/prismaClient"
 
 export class QuestionRepository {
 
-    async create(data: QuestionParams) {
+    async create(data: QuestionModel) {
         return await prismaClient.question.create({
             data: {
                 content: data.content,
@@ -19,10 +20,8 @@ export class QuestionRepository {
     async findById(id: string) {
         return await prismaClient.question.findUnique({ where: { id: id } })
     }
-}
 
-export interface QuestionParams {
-    content: string
-    lessonId: string
-    imageUrl: string | null
+    async deleteById(id: string) {
+        return await prismaClient.question.delete({ where: { id: id } })
+    }
 }
